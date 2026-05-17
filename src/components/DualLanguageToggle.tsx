@@ -8,24 +8,24 @@ interface Props {
 
 export default function DualLanguageToggle({ currentLanguage, onLanguageChange }: Props) {
   return (
-    <div className="flex items-center gap-2 bg-slate-800 rounded-lg p-1">
-      <Globe className="w-4 h-4 text-amber-500 ml-2" />
+    <div className="flex items-center gap-1 bg-[var(--surface-1)] border border-[var(--border)] rounded-lg p-1">
+      <Globe className="w-3.5 h-3.5 text-[var(--accent)] ml-1.5 hidden sm:block" />
       <button
         onClick={() => onLanguageChange('en')}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+        className={`px-2.5 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-all ${
           currentLanguage === 'en'
-            ? 'bg-amber-600 text-white shadow-lg'
-            : 'text-gray-300 hover:text-white hover:bg-slate-700'
+            ? 'bg-[var(--accent)] text-white'
+            : 'text-[var(--text-2)] hover:bg-[var(--surface-2)]'
         }`}
       >
-        English
+        EN
       </button>
       <button
         onClick={() => onLanguageChange('np')}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+        className={`px-2.5 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-all ${
           currentLanguage === 'np'
-            ? 'bg-amber-600 text-white shadow-lg'
-            : 'text-gray-300 hover:text-white hover:bg-slate-700'
+            ? 'bg-[var(--accent)] text-white'
+            : 'text-[var(--text-2)] hover:bg-[var(--surface-2)]'
         }`}
       >
         नेपाली

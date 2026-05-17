@@ -1,5 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap');
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+:root, [data-theme="amber"] {
+  --bg-0: #060912;
+  --bg-1: #0b1020;
+  --surface-1: #111729;
+  --surface-2: #182238;
+  --surface-3: #1f2b47;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+  --text-1: #f5f7fb;
+  --text-2: #c8cfe0;
+  --text-3: #8a93ab;
+  --accent: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-soft: rgba(245,158,11,0.14);
+  --accent-ring: rgba(245,158,11,0.35);
+  --grad-1: #f59e0b;
+  --grad-2: #b45309;
+}
+
+[data-theme="royal"] {
+  --bg-0: #050814;
+  --bg-1: #0a1124;
+  --surface-1: #0f172e;
+  --surface-2: #172244;
+  --surface-3: #1f2d57;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.18);
+  --text-1: #f5f7fb;
+  --text-2: #c5cee2;
+  --text-3: #87a0c4;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --accent-soft: rgba(96,165,250,0.14);
+  --accent-ring: rgba(96,165,250,0.35);
+  --grad-1: #3b82f6;
+  --grad-2: #1d4ed8;
+}
+
+[data-theme="emerald"] {
+  --bg-0: #04110b;
+  --bg-1: #07241a;
+  --surface-1: #0c2c1f;
+  --surface-2: #0f3a29;
+  --surface-3: #134d36;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+  --text-1: #f0fbf5;
+  --text-2: #c1e2ce;
+  --text-3: #7fb796;
+  --accent: #34d399;
+  --accent-hover: #6ee7b7;
+  --accent-soft: rgba(52,211,153,0.14);
+  --accent-ring: rgba(52,211,153,0.35);
+  --grad-1: #10b981;
+  --grad-2: #047857;
+}
+
+[data-theme="crimson"] {
+  --bg-0: #110608;
+  --bg-1: #220a0e;
+  --surface-1: #2a0f14;
+  --surface-2: #391520;
+  --surface-3: #4a1c2a;
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.16);
+  --text-1: #fbf2f3;
+  --text-2: #e6c8ce;
+  --text-3: #b48794;
+  --accent: #f87171;
+  --accent-hover: #fca5a5;
+  --accent-soft: rgba(248,113,113,0.14);
+  --accent-ring: rgba(248,113,113,0.35);
+  --grad-1: #ef4444;
+  --grad-2: #b91c1c;
+}
 
 html, body, #root {
   margin: 0;
@@ -9,9 +86,88 @@ html, body, #root {
 }
 
 body {
-  background-color: rgb(2 6 23);
-  color: rgb(255 255 255);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: var(--bg-0);
+  color: var(--text-1);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease;
+}
+
+.font-display {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-3);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-1);
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--accent-ring);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Animated background gradient blobs */
+.bg-aurora {
+  position: relative;
+  overflow: hidden;
+}
+.bg-aurora::before,
+.bg-aurora::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 14%, var(--accent-soft) 0%, transparent 38%),
+    radial-gradient(circle at 88% 24%, var(--accent-soft) 0%, transparent 32%),
+    radial-gradient(circle at 50% 110%, var(--accent-soft) 0%, transparent 45%);
+  opacity: 0.65;
+  z-index: 0;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--grad-1), var(--grad-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.card-surface {
+  background: linear-gradient(180deg, var(--surface-1), var(--surface-2));
+  border: 1px solid var(--border);
+}
+
+.card-surface-hover {
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.card-surface-hover:hover {
+  border-color: var(--accent-ring);
+  box-shadow: 0 18px 40px -16px var(--accent-soft);
+  transform: translateY(-3px);
+}
+
+/* Reduce content shift across responsive grids */
+.grid-fade > * {
+  min-width: 0;
 }

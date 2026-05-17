@@ -1,80 +1,85 @@
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, BookMarked } from 'lucide-react';
+import { useMemo } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowLeft, ArrowRight, BookMarked } from 'lucide-react';
+import { where } from 'firebase/firestore';
 import { useCollection } from '../hooks/useFirestore';
 import { useLanguage } from '../context/LanguageContext';
-import type { Subject } from '../types';
-import { where } from 'firebase/firestore';
-import { useMemo } from 'react';
+import type { Faculty, Subject } from '../types';
 
 export default function Year() {
-  const { year } = useParams<{ year: string }>();
+  const { facSlug, year } = useParams<{ facSlug: string; year: string }>();
   const yearNum = parseInt(year || '0');
   const { language } = useLanguage();
 
+  const { data: faculties } = useCollection<Faculty>('faculties');
+  const faculty = faculties.find(f => f.slug === facSlug);
+
   const constraints = useMemo(
-    () => (yearNum ? [where('yearId', '==', `year-${yearNum}`)] : []),
-    [yearNum]
+    () => (faculty ? [where('facultyId', '==', faculty.id), where('year', '==', yearNum)] : []),
+    [faculty?.id, yearNum]
   );
 
   const { data: subjects, loading } = useCollection<Subject>('subjects', constraints);
 
-  const yearDescriptions: Record<number, string> = {
-    1: 'Foundation & Legal Theory',
-    2: 'Core Law Subjects',
-    3: 'Specialized & Practice',
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-400">Loading...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
-      <div className="border-b border-slate-700 bg-slate-900/50 backdrop-blur-sm sticky top-14 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <Link to="/" className="inline-flex items-center gap-2 text-amber-500 hover:text-amber-400 mb-4 transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
+    <div>
+      <div className="border-b border-[var(--border)] bg-[var(--bg-1)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+          <Link
+            to={faculty ? `/faculty/${faculty.slug}` : '/faculties'}
+            className="inline-flex items-center gap-1 text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] mb-3"
+          >
+            <ArrowLeft className="w-4 h-4" /> {faculty?.name_en || 'Faculties'}
           </Link>
-          <h1 className="text-3xl font-bold text-white">Year {yearNum}</h1>
-          <p className="text-gray-400 mt-1">{yearDescriptions[yearNum]}</p>
+          <div className="flex items-center gap-4">
+            <div className="font-display text-5xl font-bold gradient-text">{yearNum}</div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-[var(--accent)] font-semibold mb-1">Year {yearNum}</p>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold">Subjects</h1>
+              {faculty && <p className="text-sm text-[var(--text-3)]">{faculty.name_en}</p>}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-semibold text-white mb-8">Subjects</h2>
-        {subjects.length === 0 ? (
-          <div className="text-center py-12">
-            <BookMarked className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">No subjects available for Year {yearNum}</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        {loading ? (
+          <div className="text-[var(--text-3)]">Loading…</div>
+        ) : subjects.length === 0 ? (
+          <div className="card-surface rounded-2xl p-12 text-center">
+            <BookMarked className="w-12 h-12 text-[var(--text-3)] mx-auto mb-4" />
+            <p className="text-[var(--text-2)] font-semibold">No subjects yet</p>
+            <p className="text-sm text-[var(--text-3)] mt-1">Add subjects from the Admin panel.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {subjects.map(subject => (
-              <Link
-                key={subject.id}
-                to={`/year/${yearNum}/subject/${subject.slug}`}
-                className="group relative overflow-hidden rounded-lg border border-slate-700 bg-gradient-to-br from-slate-800 to-slate-900 p-6 hover:border-amber-600/50 transition-all hover:shadow-xl hover:shadow-amber-600/10 text-left h-full"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 grid-fade">
+            {subjects.map((s, i) => (
+              <motion.div
+                key={s.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.35 }}
               >
-                <div className="absolute top-0 right-0 w-20 h-20 bg-amber-600/10 rounded-full blur-3xl group-hover:bg-amber-600/20 transition-colors" />
-                <div className="relative">
-                  {subject.icon && <div className="text-3xl mb-3">{subject.icon}</div>}
-                  <h3 className="text-lg font-semibold text-white group-hover:text-amber-400 transition-colors">
-                    {language === 'en' ? subject.name_en : subject.name_np || subject.name_en}
-                  </h3>
-                  <p className="text-gray-400 text-sm mt-2">
-                    {language === 'en' ? subject.name_np : subject.name_en}
-                  </p>
-                  <div className="inline-flex items-center gap-2 text-amber-400 mt-4 group-hover:gap-3 transition-all">
-                    <span className="text-sm font-medium">View</span>
-                    <span>→</span>
+                <Link
+                  to={`/faculty/${facSlug}/year/${yearNum}/${s.slug}`}
+                  className="card-surface card-surface-hover rounded-2xl p-6 block relative overflow-hidden group h-full"
+                >
+                  <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-[var(--accent-soft)] blur-3xl group-hover:scale-125 transition-transform" />
+                  <div className="relative">
+                    {s.icon && <div className="text-3xl mb-3">{s.icon}</div>}
+                    <h3 className="font-display text-lg font-bold text-[var(--text-1)] group-hover:text-[var(--accent)] transition-colors">
+                      {language === 'en' ? s.name_en : s.name_np || s.name_en}
+                    </h3>
+                    <p className="text-sm text-[var(--text-3)] mt-1">
+                      {language === 'en' ? s.name_np : s.name_en}
+                    </p>
+                    <div className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent)]">
+                      Open subject <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+              </motion.div>
             ))}
           </div>
         )}

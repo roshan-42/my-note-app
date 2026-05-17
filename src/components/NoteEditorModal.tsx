@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import RichTextEditor from './RichTextEditor';
 import type { Chapter, Note } from '../types';
 import { addDoc, updateDoc, deleteDoc, collection, doc } from 'firebase/firestore';
@@ -30,25 +31,18 @@ export default function NoteEditorModal({ chapter, note, onClose, onSave }: Prop
     try {
       const data = {
         chapterId: chapter.id,
-        title_en: titleEn,
-        title_np: titleNp,
-        content_en: contentEn,
-        content_np: contentNp,
+        title_en: titleEn, title_np: titleNp,
+        content_en: contentEn, content_np: contentNp,
         order: note?.order || 1,
         updatedAt: new Date(),
       };
-      if (note) {
-        await updateDoc(doc(db, 'notes', note.id), data);
-      } else {
-        await addDoc(collection(db, 'notes'), { ...data, createdAt: new Date() });
-      }
+      if (note) await updateDoc(doc(db, 'notes', note.id), data);
+      else await addDoc(collection(db, 'notes'), { ...data, createdAt: new Date() });
       onSave();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -60,97 +54,101 @@ export default function NoteEditorModal({ chapter, note, onClose, onSave }: Prop
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-slate-800 rounded-lg border border-slate-700 w-full max-w-4xl my-8">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-900">
-          <h2 className="text-xl font-semibold text-white">
-            {note ? 'Edit Note' : 'New Note'} — Ch {chapter.order}
-          </h2>
-          <button onClick={onClose} disabled={saving} className="text-gray-400 hover:text-white disabled:opacity-50">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-red-900/20 border border-red-900/50">
-            <p className="text-sm text-red-400">{error}</p>
-          </div>
-        )}
-
-        <div className="px-6 pt-4 flex gap-2 border-b border-slate-700">
-          <button
-            onClick={() => setActiveLang('en')}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
-              activeLang === 'en' ? 'border-amber-600 text-amber-400' : 'border-transparent text-gray-400 hover:text-white'
-            }`}
-          >English</button>
-          <button
-            onClick={() => setActiveLang('np')}
-            className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
-              activeLang === 'np' ? 'border-amber-600 text-amber-400' : 'border-transparent text-gray-400 hover:text-white'
-            }`}
-          >नेपाली</button>
-        </div>
-
-        <div className="overflow-y-auto max-h-[calc(100vh-350px)] p-6 space-y-6">
-          {activeLang === 'en' ? (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title (English) *</label>
-                <input
-                  type="text" value={titleEn} onChange={(e) => setTitleEn(e.target.value)} disabled={saving}
-                  placeholder="e.g., Introduction to Constitutional Law"
-                  className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Content (English) *</label>
-                <RichTextEditor value={contentEn} onChange={setContentEn} disabled={saving} minHeight={400} />
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">शीर्षक (Nepali)</label>
-                <input
-                  type="text" value={titleNp} onChange={(e) => setTitleNp(e.target.value)} disabled={saving}
-                  placeholder="जस्तै, संवैधानिक कानूनको परिचय"
-                  className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white text-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">सामग्री (Nepali)</label>
-                <RichTextEditor value={contentNp} onChange={setContentNp} disabled={saving} minHeight={400} />
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-700 bg-slate-900">
-          <div>
-            {note && (
-              <button onClick={handleDelete} disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-900/50 text-red-400 hover:bg-red-900/10 disabled:opacity-50">
-                <Trash2 className="w-4 h-4" />Delete
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.2 }}
+          className="bg-[var(--surface-1)] rounded-none sm:rounded-2xl border-0 sm:border border-[var(--border)] w-full max-w-4xl min-h-screen sm:min-h-0 sm:my-4 flex flex-col"
+        >
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border)] bg-[var(--bg-1)]">
+            <h2 className="font-display text-lg sm:text-xl font-bold">
+              {note ? 'Edit Note' : 'New Note'} <span className="text-[var(--accent)] text-sm font-mono">Ch {chapter.order}</span>
+            </h2>
             <button onClick={onClose} disabled={saving}
-              className="px-6 py-2 rounded-lg border border-slate-600 text-gray-300 hover:bg-slate-700 disabled:opacity-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 px-6 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white disabled:opacity-50">
-              <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save Note'}
+              className="p-1.5 rounded text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-2)] disabled:opacity-50">
+              <X className="w-5 h-5" />
             </button>
           </div>
-        </div>
+
+          {error && (
+            <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-lg bg-red-900/20 border border-red-900/50">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          <div className="px-4 sm:px-6 pt-3 flex gap-1 border-b border-[var(--border)]">
+            {(['en', 'np'] as const).map(l => (
+              <button key={l} onClick={() => setActiveLang(l)}
+                className={`px-3 sm:px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeLang === l ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
+                }`}>
+                {l === 'en' ? 'English' : 'नेपाली'}
+              </button>
+            ))}
+          </div>
+
+          <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-5">
+            {activeLang === 'en' ? (
+              <>
+                <Field label="Title (English) *">
+                  <input type="text" value={titleEn} onChange={e => setTitleEn(e.target.value)} disabled={saving}
+                    placeholder="e.g., Introduction to Constitutional Law"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg-1)] text-[var(--text-1)]" />
+                </Field>
+                <Field label="Content (English) *">
+                  <RichTextEditor value={contentEn} onChange={setContentEn} disabled={saving} minHeight={350} />
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="शीर्षक (Nepali)">
+                  <input type="text" value={titleNp} onChange={e => setTitleNp(e.target.value)} disabled={saving}
+                    placeholder="जस्तै, संवैधानिक कानूनको परिचय"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg-1)] text-[var(--text-1)] text-lg" />
+                </Field>
+                <Field label="सामग्री (Nepali)">
+                  <RichTextEditor value={contentNp} onChange={setContentNp} disabled={saving} minHeight={350} />
+                </Field>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-[var(--border)] bg-[var(--bg-1)]">
+            <div>
+              {note && (
+                <button onClick={handleDelete} disabled={saving}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-red-900/50 text-red-400 hover:bg-red-900/10 disabled:opacity-50">
+                  <Trash2 className="w-4 h-4" /> Delete
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={onClose} disabled={saving}
+                className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text-2)] hover:bg-[var(--surface-2)] disabled:opacity-50">Cancel</button>
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium disabled:opacity-50">
+                <Save className="w-4 h-4" /> {saving ? 'Saving…' : 'Save Note'}
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
+    </AnimatePresence>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-[var(--text-2)] mb-2">{label}</label>
+      {children}
     </div>
   );
 }

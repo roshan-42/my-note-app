@@ -1,6 +1,21 @@
+export interface Faculty {
+  id: string;
+  name_en: string;
+  name_np: string;
+  slug: string;
+  description_en: string;
+  description_np: string;
+  totalYears: number;
+  icon: string;
+  accent: string;
+  order: number;
+  createdAt?: Date;
+}
+
 export interface Subject {
   id: string;
-  yearId: string;
+  facultyId: string;
+  year: number;
   name_en: string;
   name_np: string;
   slug: string;
@@ -13,6 +28,7 @@ export interface Chapter {
   subjectId: string;
   title_en: string;
   title_np: string;
+  slug: string;
   order: number;
   createdAt?: Date;
 }
@@ -41,3 +57,4 @@ export interface ExamQuestion {
 }
 
 export type Language = 'en' | 'np';
+export type ThemeName = 'amber' | 'royal' | 'emerald' | 'crimson';

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import RichTextEditor from './RichTextEditor';
 import type { Chapter, ExamQuestion } from '../types';
 import { addDoc, updateDoc, deleteDoc, collection, doc } from 'firebase/firestore';
@@ -31,24 +32,15 @@ export default function QuestionEditorModal({ chapter, question, onClose, onSave
     try {
       const data = {
         chapterId: chapter.id,
-        question_en: questionEn,
-        question_np: questionNp,
-        answer_en: answerEn,
-        answer_np: answerNp,
-        type,
+        question_en: questionEn, question_np: questionNp,
+        answer_en: answerEn, answer_np: answerNp, type,
       };
-      if (question) {
-        await updateDoc(doc(db, 'questions', question.id), data);
-      } else {
-        await addDoc(collection(db, 'questions'), { ...data, createdAt: new Date() });
-      }
-      onSave();
-      onClose();
+      if (question) await updateDoc(doc(db, 'questions', question.id), data);
+      else await addDoc(collection(db, 'questions'), { ...data, createdAt: new Date() });
+      onSave(); onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
@@ -56,110 +48,115 @@ export default function QuestionEditorModal({ chapter, question, onClose, onSave
     setSaving(true);
     try {
       await deleteDoc(doc(db, 'questions', question.id));
-      onSave();
-      onClose();
+      onSave(); onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-      <div className="bg-slate-800 rounded-lg border border-slate-700 w-full max-w-4xl my-8">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-900">
-          <h2 className="text-xl font-semibold text-white">
-            {question ? 'Edit Question' : 'New Question'} — Ch {chapter.order}
-          </h2>
-          <button onClick={onClose} disabled={saving} className="text-gray-400 hover:text-white disabled:opacity-50">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {error && (
-          <div className="mx-6 mt-4 p-3 rounded-lg bg-red-900/20 border border-red-900/50">
-            <p className="text-sm text-red-400">{error}</p>
-          </div>
-        )}
-
-        <div className="px-6 pt-4">
-          <div className="flex gap-6 pb-4 border-b border-slate-700">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" value="past" checked={type === 'past'}
-                onChange={(e) => setType(e.target.value as 'past' | 'possible')} disabled={saving}
-                className="w-4 h-4 accent-amber-600" />
-              <span className="text-sm font-medium text-amber-400">Past Question</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" value="possible" checked={type === 'possible'}
-                onChange={(e) => setType(e.target.value as 'past' | 'possible')} disabled={saving}
-                className="w-4 h-4 accent-slate-500" />
-              <span className="text-sm font-medium text-slate-300">Possible Question</span>
-            </label>
-          </div>
-
-          <div className="flex gap-2 pt-3 border-b border-slate-700">
-            <button onClick={() => setActiveLang('en')}
-              className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
-                activeLang === 'en' ? 'border-purple-600 text-purple-400' : 'border-transparent text-gray-400 hover:text-white'
-              }`}>English</button>
-            <button onClick={() => setActiveLang('np')}
-              className={`px-4 py-2 font-medium text-sm transition-colors border-b-2 ${
-                activeLang === 'np' ? 'border-purple-600 text-purple-400' : 'border-transparent text-gray-400 hover:text-white'
-              }`}>नेपाली</button>
-          </div>
-        </div>
-
-        <div className="overflow-y-auto max-h-[calc(100vh-380px)] p-6 space-y-6">
-          {activeLang === 'en' ? (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Question (English) *</label>
-                <textarea value={questionEn} onChange={(e) => setQuestionEn(e.target.value)} disabled={saving}
-                  placeholder="What is..." rows={3}
-                  className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white resize-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Answer (English) *</label>
-                <RichTextEditor value={answerEn} onChange={setAnswerEn} disabled={saving} minHeight={300} />
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">प्रश्न (Nepali)</label>
-                <textarea value={questionNp} onChange={(e) => setQuestionNp(e.target.value)} disabled={saving}
-                  placeholder="के हो..." rows={3}
-                  className="w-full px-4 py-2 border border-slate-600 rounded-lg bg-slate-700 text-white text-lg resize-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">उत्तर (Nepali)</label>
-                <RichTextEditor value={answerNp} onChange={setAnswerNp} disabled={saving} minHeight={300} />
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-slate-700 bg-slate-900">
-          <div>
-            {question && (
-              <button onClick={handleDelete} disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-900/50 text-red-400 hover:bg-red-900/10 disabled:opacity-50">
-                <Trash2 className="w-4 h-4" />Delete
-              </button>
-            )}
-          </div>
-          <div className="flex gap-2">
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.2 }}
+          className="bg-[var(--surface-1)] rounded-none sm:rounded-2xl border-0 sm:border border-[var(--border)] w-full max-w-4xl min-h-screen sm:min-h-0 sm:my-4 flex flex-col"
+        >
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[var(--border)] bg-[var(--bg-1)]">
+            <h2 className="font-display text-lg sm:text-xl font-bold">
+              {question ? 'Edit Question' : 'New Question'} <span className="text-[var(--accent)] text-sm font-mono">Ch {chapter.order}</span>
+            </h2>
             <button onClick={onClose} disabled={saving}
-              className="px-6 py-2 rounded-lg border border-slate-600 text-gray-300 hover:bg-slate-700 disabled:opacity-50">Cancel</button>
-            <button onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white disabled:opacity-50">
-              <Save className="w-4 h-4" />{saving ? 'Saving...' : 'Save Question'}
+              className="p-1.5 rounded text-[var(--text-3)] hover:text-[var(--text-1)] hover:bg-[var(--surface-2)] disabled:opacity-50">
+              <X className="w-5 h-5" />
             </button>
           </div>
-        </div>
+
+          {error && (
+            <div className="mx-4 sm:mx-6 mt-3 p-3 rounded-lg bg-red-900/20 border border-red-900/50">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          <div className="px-4 sm:px-6 pt-3 pb-3 border-b border-[var(--border)] flex flex-wrap gap-4">
+            {(['past', 'possible'] as const).map(t => (
+              <label key={t} className="flex items-center gap-2 cursor-pointer">
+                <input type="radio" value={t} checked={type === t}
+                  onChange={e => setType(e.target.value as 'past' | 'possible')} disabled={saving}
+                  className="w-4 h-4 accent-[var(--accent)]" />
+                <span className="text-sm font-medium text-[var(--text-2)]">{t === 'past' ? 'Past Question' : 'Possible Question'}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="px-4 sm:px-6 flex gap-1 border-b border-[var(--border)]">
+            {(['en', 'np'] as const).map(l => (
+              <button key={l} onClick={() => setActiveLang(l)}
+                className={`px-3 sm:px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeLang === l ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-[var(--text-3)] hover:text-[var(--text-1)]'
+                }`}>
+                {l === 'en' ? 'English' : 'नेपाली'}
+              </button>
+            ))}
+          </div>
+
+          <div className="overflow-y-auto flex-1 p-4 sm:p-6 space-y-5">
+            {activeLang === 'en' ? (
+              <>
+                <Field label="Question (English) *">
+                  <textarea value={questionEn} onChange={e => setQuestionEn(e.target.value)} disabled={saving}
+                    placeholder="What is..." rows={3}
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg-1)] text-[var(--text-1)] resize-none" />
+                </Field>
+                <Field label="Answer (English) *">
+                  <RichTextEditor value={answerEn} onChange={setAnswerEn} disabled={saving} minHeight={280} />
+                </Field>
+              </>
+            ) : (
+              <>
+                <Field label="प्रश्न (Nepali)">
+                  <textarea value={questionNp} onChange={e => setQuestionNp(e.target.value)} disabled={saving}
+                    placeholder="के हो..." rows={3}
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-lg bg-[var(--bg-1)] text-[var(--text-1)] text-lg resize-none" />
+                </Field>
+                <Field label="उत्तर (Nepali)">
+                  <RichTextEditor value={answerNp} onChange={setAnswerNp} disabled={saving} minHeight={280} />
+                </Field>
+              </>
+            )}
+          </div>
+
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-[var(--border)] bg-[var(--bg-1)]">
+            <div>
+              {question && (
+                <button onClick={handleDelete} disabled={saving}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-red-900/50 text-red-400 hover:bg-red-900/10 disabled:opacity-50">
+                  <Trash2 className="w-4 h-4" /> Delete
+                </button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={onClose} disabled={saving}
+                className="flex-1 sm:flex-initial px-4 py-2 rounded-lg border border-[var(--border)] text-[var(--text-2)] hover:bg-[var(--surface-2)] disabled:opacity-50">Cancel</button>
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium disabled:opacity-50">
+                <Save className="w-4 h-4" /> {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </motion.div>
       </div>
+    </AnimatePresence>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-[var(--text-2)] mb-2">{label}</label>
+      {children}
     </div>
   );
 }
