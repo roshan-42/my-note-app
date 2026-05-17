@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen } from 'lucide-react';
 import { useCollection } from '../../hooks/useFirestore';
+import { termLabel } from '../../utils/term';
 import type { Faculty, Subject } from '../../types';
 
 export default function AdminFaculty() {
@@ -37,7 +38,7 @@ export default function AdminFaculty() {
                 <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-[var(--accent-soft)] blur-3xl group-hover:scale-125 transition-transform" />
                 <div className="relative">
                   <div className="font-display text-5xl font-bold gradient-text">{y}</div>
-                  <h3 className="font-semibold mt-2">Year {y}</h3>
+                  <h3 className="font-semibold mt-2">{termLabel(faculty.termType, y)}</h3>
                   <p className="text-xs text-[var(--text-3)] mt-1 flex items-center gap-1">
                     <BookOpen className="w-3 h-3" /> {ySubs.length} subject{ySubs.length !== 1 ? 's' : ''}
                   </p>

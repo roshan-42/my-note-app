@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import RichTextEditor from './RichTextEditor';
 import type { Chapter, Note } from '../types';
 import { addDoc, updateDoc, deleteDoc, collection, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { useConfirm } from '../context/ConfirmContext';
 
 interface Props {
   chapter: Chapter;
@@ -21,6 +23,7 @@ export default function NoteEditorModal({ chapter, note, onClose, onSave }: Prop
   const [activeLang, setActiveLang] = useState<'en' | 'np'>('en');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const handleSave = async () => {
     if (!titleEn.trim() || !contentEn.trim()) {
@@ -38,22 +41,35 @@ export default function NoteEditorModal({ chapter, note, onClose, onSave }: Prop
       };
       if (note) await updateDoc(doc(db, 'notes', note.id), data);
       else await addDoc(collection(db, 'notes'), { ...data, createdAt: new Date() });
+      toast.success(note ? 'Note updated' : 'Note created', { description: titleEn });
       onSave();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      const msg = err instanceof Error ? err.message : 'Failed to save';
+      setError(msg);
+      toast.error('Save failed', { description: msg });
     } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
-    if (!note || !confirm('Delete this note?')) return;
+    if (!note) return;
+    const ok = await confirm({
+      title: `Delete "${note.title_en || 'this note'}"?`,
+      message: 'This permanently removes the note.',
+      confirmLabel: 'Delete note',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       await deleteDoc(doc(db, 'notes', note.id));
+      toast.success('Note deleted');
       onSave();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete');
+      const msg = err instanceof Error ? err.message : 'Failed to delete';
+      setError(msg);
+      toast.error('Delete failed', { description: msg });
     } finally { setSaving(false); }
   };
 

@@ -2,6 +2,7 @@ import { Outlet, useParams, Link } from 'react-router-dom';
 import { ChevronRight, Home } from 'lucide-react';
 import { useCollection } from '../hooks/useFirestore';
 import AdminSidebar from '../components/AdminSidebar';
+import { termLabel } from '../utils/term';
 import type { Faculty, Subject, Chapter } from '../types';
 
 export default function Admin() {
@@ -42,7 +43,7 @@ export default function Admin() {
             {faculty && yearNum && (
               <>
                 <ChevronRight className="w-3.5 h-3.5" />
-                <Link to={`${baseAdmin}/${faculty.slug}/year/${yearNum}`} className="hover:text-[var(--accent)] text-[var(--text-2)]">Year {yearNum}</Link>
+                <Link to={`${baseAdmin}/${faculty.slug}/year/${yearNum}`} className="hover:text-[var(--accent)] text-[var(--text-2)]">{termLabel(faculty.termType, yearNum)}</Link>
               </>
             )}
             {subject && faculty && yearNum && (

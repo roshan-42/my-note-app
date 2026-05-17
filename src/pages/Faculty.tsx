@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
 import { useCollection } from '../hooks/useFirestore';
+import { termLabel, termNoun } from '../utils/term';
 import type { Faculty as FacultyType, Subject } from '../types';
 
 export default function Faculty() {
@@ -35,7 +36,7 @@ export default function Faculty() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h2 className="font-display text-2xl sm:text-3xl font-bold mb-8">Pick your year</h2>
+        <h2 className="font-display text-2xl sm:text-3xl font-bold mb-8">Pick your {termNoun(faculty.termType)}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {years.map((y, i) => {
             const yearSubjects = subjects.filter(s => s.facultyId === faculty.id && s.year === y);
@@ -53,12 +54,12 @@ export default function Faculty() {
                   <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-[var(--accent-soft)] blur-3xl group-hover:scale-125 transition-transform" />
                   <div className="relative">
                     <div className="font-display text-7xl font-bold gradient-text">{y}</div>
-                    <h3 className="text-xl font-semibold mt-2">Year {y}</h3>
+                    <h3 className="text-xl font-semibold mt-2">{termLabel(faculty.termType, y)}</h3>
                     <div className="mt-4 flex items-center gap-2 text-sm text-[var(--text-3)]">
                       <BookOpen className="w-4 h-4" /> {yearSubjects.length} subject{yearSubjects.length !== 1 ? 's' : ''}
                     </div>
                     <div className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent)]">
-                      Open year <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      Open {termNoun(faculty.termType)} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </Link>

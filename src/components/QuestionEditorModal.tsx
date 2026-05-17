@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { X, Save, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import RichTextEditor from './RichTextEditor';
 import type { Chapter, ExamQuestion } from '../types';
 import { addDoc, updateDoc, deleteDoc, collection, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { useConfirm } from '../context/ConfirmContext';
 
 interface Props {
   chapter: Chapter;
@@ -22,6 +24,7 @@ export default function QuestionEditorModal({ chapter, question, onClose, onSave
   const [activeLang, setActiveLang] = useState<'en' | 'np'>('en');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const handleSave = async () => {
     if (!questionEn.trim() || !answerEn.trim()) {
@@ -37,20 +40,35 @@ export default function QuestionEditorModal({ chapter, question, onClose, onSave
       };
       if (question) await updateDoc(doc(db, 'questions', question.id), data);
       else await addDoc(collection(db, 'questions'), { ...data, createdAt: new Date() });
+      toast.success(question ? 'Question updated' : 'Question added', {
+        description: type === 'past' ? 'Past question' : 'Possible question',
+      });
       onSave(); onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      const msg = err instanceof Error ? err.message : 'Failed to save';
+      setError(msg);
+      toast.error('Save failed', { description: msg });
     } finally { setSaving(false); }
   };
 
   const handleDelete = async () => {
-    if (!question || !confirm('Delete this question?')) return;
+    if (!question) return;
+    const ok = await confirm({
+      title: 'Delete this question?',
+      message: 'This permanently removes the question and its answer.',
+      confirmLabel: 'Delete question',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setSaving(true);
     try {
       await deleteDoc(doc(db, 'questions', question.id));
+      toast.success('Question deleted');
       onSave(); onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete');
+      const msg = err instanceof Error ? err.message : 'Failed to delete';
+      setError(msg);
+      toast.error('Delete failed', { description: msg });
     } finally { setSaving(false); }
   };
 

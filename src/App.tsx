@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ConfirmProvider } from './context/ConfirmContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Faculties from './pages/Faculties';
@@ -22,32 +24,47 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/faculties" element={<Faculties />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/faculty/:facSlug" element={<Faculty />} />
-              <Route path="/faculty/:facSlug/year/:year" element={<Year />} />
-              <Route path="/faculty/:facSlug/year/:year/:subjSlug" element={<Subject />} />
-              <Route path="/faculty/:facSlug/year/:year/:subjSlug/notes" element={<SubjectNotes />} />
-              <Route path="/faculty/:facSlug/year/:year/:subjSlug/notes/:chSlug" element={<SubjectNotes />} />
-              <Route path="/faculty/:facSlug/year/:year/:subjSlug/exams" element={<SubjectExams />} />
-              <Route path="/faculty/:facSlug/year/:year/:subjSlug/exams/:chSlug" element={<SubjectExams />} />
+        <ConfirmProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/faculties" element={<Faculties />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/faculty/:facSlug" element={<Faculty />} />
+                <Route path="/faculty/:facSlug/year/:year" element={<Year />} />
+                <Route path="/faculty/:facSlug/year/:year/:subjSlug" element={<Subject />} />
+                <Route path="/faculty/:facSlug/year/:year/:subjSlug/notes" element={<SubjectNotes />} />
+                <Route path="/faculty/:facSlug/year/:year/:subjSlug/notes/:chSlug" element={<SubjectNotes />} />
+                <Route path="/faculty/:facSlug/year/:year/:subjSlug/exams" element={<SubjectExams />} />
+                <Route path="/faculty/:facSlug/year/:year/:subjSlug/exams/:chSlug" element={<SubjectExams />} />
 
-              <Route path="/admin" element={<Admin />}>
-                <Route index element={<AdminHome />} />
-                <Route path=":facSlug" element={<AdminFaculty />} />
-                <Route path=":facSlug/year/:year" element={<AdminYear />} />
-                <Route path=":facSlug/year/:year/:subjSlug" element={<AdminSubject />} />
-                <Route path=":facSlug/year/:year/:subjSlug/:chSlug" element={<AdminChapter />} />
+                <Route path="/admin" element={<Admin />}>
+                  <Route index element={<AdminHome />} />
+                  <Route path=":facSlug" element={<AdminFaculty />} />
+                  <Route path=":facSlug/year/:year" element={<AdminYear />} />
+                  <Route path=":facSlug/year/:year/:subjSlug" element={<AdminSubject />} />
+                  <Route path=":facSlug/year/:year/:subjSlug/:chSlug" element={<AdminChapter />} />
+                </Route>
+
+                <Route path="*" element={<NotFound />} />
               </Route>
-
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+          <Toaster
+            position="top-right"
+            theme="dark"
+            richColors
+            closeButton
+            toastOptions={{
+              style: {
+                background: 'var(--surface-1)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--text-1)',
+              },
+            }}
+          />
+        </ConfirmProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

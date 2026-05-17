@@ -1,3 +1,5 @@
+export type TermType = 'year' | 'semester';
+
 export interface Faculty {
   id: string;
   name_en: string;
@@ -6,6 +8,7 @@ export interface Faculty {
   description_en: string;
   description_np: string;
   totalYears: number;
+  termType: TermType;
   icon: string;
   accent: string;
   order: number;

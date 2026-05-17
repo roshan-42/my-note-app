@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, BookMarked } from 'lucide-react';
 import { where } from 'firebase/firestore';
 import { useCollection } from '../hooks/useFirestore';
 import { useLanguage } from '../context/LanguageContext';
+import { termLabel } from '../utils/term';
 import type { Faculty, Subject } from '../types';
 
 export default function Year() {
@@ -35,7 +36,7 @@ export default function Year() {
           <div className="flex items-center gap-4">
             <div className="font-display text-5xl font-bold gradient-text">{yearNum}</div>
             <div>
-              <p className="text-xs uppercase tracking-widest text-[var(--accent)] font-semibold mb-1">Year {yearNum}</p>
+              <p className="text-xs uppercase tracking-widest text-[var(--accent)] font-semibold mb-1">{termLabel(faculty?.termType, yearNum)}</p>
               <h1 className="font-display text-2xl sm:text-3xl font-bold">Subjects</h1>
               {faculty && <p className="text-sm text-[var(--text-3)]">{faculty.name_en}</p>}
             </div>

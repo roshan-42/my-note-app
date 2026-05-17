@@ -2,10 +2,13 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Plus, Save, Trash2, X, ArrowRight, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { addDoc, collection, deleteDoc, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useCollection } from '../../hooks/useFirestore';
 import { uniqueSlug } from '../../utils/slug';
+import { termLabel } from '../../utils/term';
+import { useConfirm } from '../../context/ConfirmContext';
 import type { Faculty, Subject, Chapter } from '../../types';
 
 const EMPTY = { title_en: '', title_np: '' };
@@ -26,6 +29,7 @@ export default function AdminSubject() {
   const [editing, setEditing] = useState<Chapter | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const confirm = useConfirm();
 
   if (!subject) return <p className="text-[var(--text-3)]">Subject not found.</p>;
 
@@ -41,6 +45,7 @@ export default function AdminSubject() {
         await updateDoc(doc(db, 'chapters', editing.id), {
           title_en: form.title_en, title_np: form.title_np,
         });
+        toast.success('Chapter updated', { description: form.title_en });
       } else {
         const nextOrder = sorted.length > 0 ? Math.max(...sorted.map(c => c.order)) + 1 : 1;
         const slug = uniqueSlug(form.title_en, sorted.map(c => c.slug));
@@ -49,17 +54,28 @@ export default function AdminSubject() {
           title_en: form.title_en, title_np: form.title_np,
           slug, order: nextOrder, createdAt: new Date(),
         });
+        toast.success('Chapter added', { description: `Ch ${nextOrder} · ${form.title_en}` });
       }
       setShowForm(false); setEditing(null); setForm(EMPTY);
     } catch (err) {
-      alert('Save failed: ' + (err as Error).message);
+      toast.error('Save failed', { description: (err as Error).message });
     } finally { setLoading(false); }
   };
 
   const handleDelete = async (c: Chapter) => {
-    if (!confirm(`Delete chapter "${c.title_en}"?`)) return;
-    try { await deleteDoc(doc(db, 'chapters', c.id)); }
-    catch (err) { alert('Delete failed: ' + (err as Error).message); }
+    const ok = await confirm({
+      title: `Delete "${c.title_en}"?`,
+      message: 'Notes and questions in this chapter remain in storage but become orphaned.',
+      confirmLabel: 'Delete chapter',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db, 'chapters', c.id));
+      toast.success('Chapter deleted');
+    } catch (err) {
+      toast.error('Delete failed', { description: (err as Error).message });
+    }
   };
 
   return (
@@ -69,7 +85,7 @@ export default function AdminSubject() {
           <h1 className="font-display text-3xl font-bold flex items-center gap-2">
             {subject.icon && <span>{subject.icon}</span>} {subject.name_en}
           </h1>
-          <p className="text-sm text-[var(--text-3)] mt-1">{subject.name_np} · Year {yearNum} · {faculty?.name_en}</p>
+          <p className="text-sm text-[var(--text-3)] mt-1">{subject.name_np} · {termLabel(faculty?.termType, yearNum)} · {faculty?.name_en}</p>
         </div>
         <button onClick={openCreate}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium self-start">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight, GraduationCap, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCollection } from '../hooks/useFirestore';
+import { termLabel } from '../utils/term';
 import type { Faculty, Subject, Chapter } from '../types';
 
 interface Props {
@@ -106,7 +107,7 @@ export default function AdminSidebar({ faculty, year, subject, chapter }: Props)
                               className={`flex-1 px-2 py-1.5 rounded text-xs transition-colors ${
                                 faculty?.id === f.id && year === y && !subject ? 'bg-[var(--accent-soft)] text-[var(--accent)]' : 'text-[var(--text-2)] hover:bg-[var(--surface-1)]'
                               }`}>
-                              Year {y}
+                              {termLabel(f.termType, y, true)}
                             </Link>
                           </div>
                           {yearOpen && (

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen, BarChart3, Languages, ShieldCheck, Sparkles, GraduationCap } from 'lucide-react';
 import { useCollection } from '../hooks/useFirestore';
+import { termLabelPlural } from '../utils/term';
 import type { Faculty, Subject, Chapter, Note } from '../types';
 
 const fadeUp = {
@@ -219,7 +220,7 @@ function FacultyCard({ f }: { f: Faculty }) {
         <p className="text-sm text-[var(--text-3)] mt-1">{f.name_np}</p>
         <p className="text-sm text-[var(--text-2)] mt-3 line-clamp-2">{f.description_en}</p>
         <div className="mt-5 flex items-center justify-between">
-          <span className="text-xs text-[var(--text-3)]">{f.totalYears} year{f.totalYears !== 1 ? 's' : ''}</span>
+          <span className="text-xs text-[var(--text-3)]">{termLabelPlural(f.termType, f.totalYears)}</span>
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--accent)]">
             Explore <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </span>

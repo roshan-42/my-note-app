@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { Plus, Save, Trash2, Edit2, X } from 'lucide-react';
+import { Plus, Save, Trash2, Edit2, X, Calendar, BookOpen } from 'lucide-react';
+import { toast } from 'sonner';
 import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { uniqueSlug } from '../utils/slug';
-import type { Faculty } from '../types';
+import { termLabelPlural } from '../utils/term';
+import { useConfirm } from '../context/ConfirmContext';
+import type { Faculty, TermType } from '../types';
 
 interface Props { faculties: Faculty[] }
 
 const EMPTY = {
   name_en: '', name_np: '', description_en: '', description_np: '',
-  totalYears: 3, icon: '🎓',
+  totalYears: 3, termType: 'year' as TermType, icon: '🎓',
 };
 
 export default function FacultyEditor({ faculties }: Props) {
@@ -17,6 +20,7 @@ export default function FacultyEditor({ faculties }: Props) {
   const [editing, setEditing] = useState<Faculty | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const confirm = useConfirm();
 
   const openCreate = () => { setEditing(null); setForm(EMPTY); setShowForm(true); };
   const openEdit = (f: Faculty) => {
@@ -24,7 +28,9 @@ export default function FacultyEditor({ faculties }: Props) {
     setForm({
       name_en: f.name_en, name_np: f.name_np,
       description_en: f.description_en, description_np: f.description_np,
-      totalYears: f.totalYears, icon: f.icon,
+      totalYears: f.totalYears,
+      termType: f.termType || 'year',
+      icon: f.icon,
     });
     setShowForm(true);
   };
@@ -34,15 +40,18 @@ export default function FacultyEditor({ faculties }: Props) {
     if (!form.name_en.trim()) return;
     setLoading(true);
     try {
+      const totalYears = Math.max(1, Math.min(form.termType === 'semester' ? 12 : 6, Number(form.totalYears) || 3));
       if (editing) {
         await updateDoc(doc(db, 'faculties', editing.id), {
           name_en: form.name_en,
           name_np: form.name_np,
           description_en: form.description_en,
           description_np: form.description_np,
-          totalYears: Number(form.totalYears) || 3,
+          totalYears,
+          termType: form.termType,
           icon: form.icon || '🎓',
         });
+        toast.success('Faculty updated', { description: form.name_en });
       } else {
         const slug = uniqueSlug(form.name_en, faculties.map(f => f.slug));
         const order = faculties.length;
@@ -52,30 +61,40 @@ export default function FacultyEditor({ faculties }: Props) {
           slug,
           description_en: form.description_en,
           description_np: form.description_np,
-          totalYears: Number(form.totalYears) || 3,
+          totalYears,
+          termType: form.termType,
           icon: form.icon || '🎓',
           accent: 'amber',
           order,
           createdAt: new Date(),
         });
+        toast.success('Faculty created', { description: `${form.name_en} · /${slug}` });
       }
       setShowForm(false); setEditing(null); setForm(EMPTY);
     } catch (err) {
-      console.error(err);
-      alert('Save failed: ' + (err as Error).message);
+      toast.error('Save failed', { description: (err as Error).message });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (f: Faculty) => {
-    if (!confirm(`Delete faculty "${f.name_en}"? This does NOT delete its subjects/chapters automatically.`)) return;
+    const ok = await confirm({
+      title: `Delete "${f.name_en}"?`,
+      message: 'Subjects, chapters, notes and questions under this faculty are not auto-deleted. Remove those first if you want a clean wipe.',
+      confirmLabel: 'Delete faculty',
+      tone: 'danger',
+    });
+    if (!ok) return;
     try {
       await deleteDoc(doc(db, 'faculties', f.id));
+      toast.success('Faculty deleted', { description: f.name_en });
     } catch (err) {
-      alert('Delete failed: ' + (err as Error).message);
+      toast.error('Delete failed', { description: (err as Error).message });
     }
   };
+
+  const maxTerms = form.termType === 'semester' ? 12 : 6;
 
   return (
     <div className="card-surface rounded-2xl p-5 sm:p-6">
@@ -94,26 +113,48 @@ export default function FacultyEditor({ faculties }: Props) {
             <button type="button" onClick={() => { setShowForm(false); setEditing(null); }}
               className="p-1 text-[var(--text-3)] hover:text-[var(--text-1)]"><X className="w-4 h-4" /></button>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Name (EN) *" value={form.name_en} onChange={v => setForm({ ...form, name_en: v })} required />
             <Input label="Name (नेपाली)" value={form.name_np} onChange={v => setForm({ ...form, name_np: v })} />
             <Input label="Description (EN)" value={form.description_en} onChange={v => setForm({ ...form, description_en: v })} />
             <Input label="Description (नेपाली)" value={form.description_np} onChange={v => setForm({ ...form, description_np: v })} />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px_120px] gap-3">
             <div>
-              <label className="block text-xs font-medium text-[var(--text-3)] mb-1">Total years</label>
-              <input type="number" min={1} max={8} value={form.totalYears}
-                onChange={e => setForm({ ...form, totalYears: parseInt(e.target.value) || 3 })}
+              <label className="block text-xs font-medium text-[var(--text-3)] mb-1">Term type</label>
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-[var(--surface-1)] border border-[var(--border)]">
+                <ToggleBtn
+                  active={form.termType === 'year'}
+                  onClick={() => setForm({ ...form, termType: 'year', totalYears: Math.min(form.totalYears, 6) })}
+                  icon={Calendar} label="Year"
+                />
+                <ToggleBtn
+                  active={form.termType === 'semester'}
+                  onClick={() => setForm({ ...form, termType: 'semester' })}
+                  icon={BookOpen} label="Semester"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--text-3)] mb-1">
+                Total {form.termType === 'semester' ? 'semesters' : 'years'}
+              </label>
+              <input type="number" min={1} max={maxTerms} value={form.totalYears}
+                onChange={e => setForm({ ...form, totalYears: parseInt(e.target.value) || 1 })}
                 className="w-full px-3 py-2 rounded-lg bg-[var(--surface-1)] border border-[var(--border)] text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-[var(--text-3)] mb-1">Icon (emoji)</label>
+              <label className="block text-xs font-medium text-[var(--text-3)] mb-1">Icon</label>
               <input type="text" maxLength={4} value={form.icon}
                 onChange={e => setForm({ ...form, icon: e.target.value })}
                 className="w-full px-3 py-2 rounded-lg bg-[var(--surface-1)] border border-[var(--border)] text-center text-xl" />
             </div>
           </div>
+
           {!editing && (
-            <p className="text-xs text-[var(--text-3)]">Slug will be auto-generated from name.</p>
+            <p className="text-xs text-[var(--text-3)]">Slug auto-generated from name.</p>
           )}
           <div className="flex gap-2 pt-1">
             <button type="submit" disabled={loading}
@@ -137,7 +178,7 @@ export default function FacultyEditor({ faculties }: Props) {
               <div className="text-2xl">{f.icon || '🎓'}</div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-[var(--text-1)] truncate">{f.name_en}</p>
-                <p className="text-xs text-[var(--text-3)] truncate">/{f.slug} · {f.totalYears} year{f.totalYears !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-[var(--text-3)] truncate">/{f.slug} · {termLabelPlural(f.termType, f.totalYears)}</p>
               </div>
               <button onClick={() => openEdit(f)}
                 className="p-1.5 rounded text-[var(--text-3)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]">
@@ -152,6 +193,17 @@ export default function FacultyEditor({ faculties }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function ToggleBtn({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: React.ElementType; label: string }) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`inline-flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+        active ? 'bg-[var(--accent)] text-white' : 'text-[var(--text-2)] hover:bg-[var(--surface-2)]'
+      }`}>
+      <Icon className="w-3.5 h-3.5" /> {label}
+    </button>
   );
 }
 

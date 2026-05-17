@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, BookOpen, FileText, Layers } from 'lucide-react'
 import { where } from 'firebase/firestore';
 import { useCollection } from '../hooks/useFirestore';
 import { useLanguage } from '../context/LanguageContext';
+import { termLabel } from '../utils/term';
 import type { Faculty, Chapter, Subject as SubjectType } from '../types';
 
 export default function Subject() {
@@ -41,7 +42,7 @@ export default function Subject() {
       <div className="border-b border-[var(--border)] bg-[var(--bg-1)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
           <Link to={`/faculty/${facSlug}/year/${yearNum}`} className="inline-flex items-center gap-1 text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] mb-3">
-            <ArrowLeft className="w-4 h-4" /> Year {yearNum}
+            <ArrowLeft className="w-4 h-4" /> {termLabel(faculty?.termType, yearNum)}
           </Link>
           <div className="flex items-center gap-4">
             {subject.icon && <div className="text-4xl sm:text-5xl">{subject.icon}</div>}

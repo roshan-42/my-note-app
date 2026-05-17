@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, BarChart3, BookOpen, GraduationCap, HelpCircle, Layers } from 'lucide-react';
 import { useCollection } from '../../hooks/useFirestore';
 import FacultyEditor from '../../components/FacultyEditor';
+import { termLabelPlural } from '../../utils/term';
 import type { Faculty, Subject, Chapter, Note, ExamQuestion } from '../../types';
 
 export default function AdminHome() {
@@ -56,7 +57,7 @@ export default function AdminHome() {
                 <div className="text-3xl">{f.icon || '🎓'}</div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate group-hover:text-[var(--accent)]">{f.name_en}</p>
-                  <p className="text-xs text-[var(--text-3)] truncate">{f.totalYears} years · /{f.slug}</p>
+                  <p className="text-xs text-[var(--text-3)] truncate">{termLabelPlural(f.termType, f.totalYears)} · /{f.slug}</p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-[var(--text-3)] group-hover:text-[var(--accent)] group-hover:translate-x-1 transition-all" />
               </Link>

@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Plus, Save, Trash2, X, ArrowRight, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useCollection } from '../../hooks/useFirestore';
 import { uniqueSlug } from '../../utils/slug';
+import { termLabel } from '../../utils/term';
+import { useConfirm } from '../../context/ConfirmContext';
 import type { Faculty, Subject } from '../../types';
 
 const EMPTY = { name_en: '', name_np: '', icon: '' };
@@ -21,10 +24,12 @@ export default function AdminYear() {
   const [editing, setEditing] = useState<Subject | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const confirm = useConfirm();
 
   if (!faculty) return <p className="text-[var(--text-3)]">Faculty not found.</p>;
 
   const ySubjects = subjects.filter(s => s.facultyId === faculty.id && s.year === yearNum);
+  const termText = termLabel(faculty.termType, yearNum);
 
   const openCreate = () => { setEditing(null); setForm(EMPTY); setShowForm(true); };
   const openEdit = (s: Subject) => { setEditing(s); setForm({ name_en: s.name_en, name_np: s.name_np, icon: s.icon || '' }); setShowForm(true); };
@@ -38,6 +43,7 @@ export default function AdminYear() {
         await updateDoc(doc(db, 'subjects', editing.id), {
           name_en: form.name_en, name_np: form.name_np, icon: form.icon || null,
         });
+        toast.success('Subject updated', { description: form.name_en });
       } else {
         const slug = uniqueSlug(form.name_en, ySubjects.map(s => s.slug));
         await addDoc(collection(db, 'subjects'), {
@@ -45,24 +51,35 @@ export default function AdminYear() {
           name_en: form.name_en, name_np: form.name_np, slug,
           icon: form.icon || null, createdAt: new Date(),
         });
+        toast.success('Subject added', { description: `${form.name_en} · /${slug}` });
       }
       setShowForm(false); setEditing(null); setForm(EMPTY);
     } catch (err) {
-      alert('Save failed: ' + (err as Error).message);
+      toast.error('Save failed', { description: (err as Error).message });
     } finally { setLoading(false); }
   };
 
   const handleDelete = async (s: Subject) => {
-    if (!confirm(`Delete subject "${s.name_en}"?`)) return;
-    try { await deleteDoc(doc(db, 'subjects', s.id)); }
-    catch (err) { alert('Delete failed: ' + (err as Error).message); }
+    const ok = await confirm({
+      title: `Delete "${s.name_en}"?`,
+      message: 'Chapters and notes under this subject are not auto-deleted.',
+      confirmLabel: 'Delete subject',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db, 'subjects', s.id));
+      toast.success('Subject deleted');
+    } catch (err) {
+      toast.error('Delete failed', { description: (err as Error).message });
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="font-display text-3xl font-bold">Year {yearNum} — Subjects</h1>
+          <h1 className="font-display text-3xl font-bold">{termText} — Subjects</h1>
           <p className="text-sm text-[var(--text-3)] mt-1">{faculty.name_en}</p>
         </div>
         <button onClick={openCreate}
@@ -103,7 +120,7 @@ export default function AdminYear() {
 
       {ySubjects.length === 0 ? (
         <div className="card-surface rounded-2xl p-10 text-center text-[var(--text-3)]">
-          No subjects in Year {yearNum}.
+          No subjects in {termText}.
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
