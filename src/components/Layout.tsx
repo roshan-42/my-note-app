@@ -36,12 +36,14 @@ export default function Layout() {
 
           <div className="flex items-center gap-2">
             <ThemePicker />
-            <Link
-              to={isAdmin ? '/' : '/admin'}
-              className="hidden sm:inline-flex text-sm px-4 py-2 rounded-lg bg-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-white text-[var(--accent)] transition-colors border border-[var(--accent-ring)] font-medium"
-            >
-              {isAdmin ? 'Exit Admin' : 'Admin'}
-            </Link>
+            {isAdmin && (
+              <Link
+                to="/"
+                className="hidden sm:inline-flex text-sm px-4 py-2 rounded-lg bg-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-white text-[var(--accent)] transition-colors border border-[var(--accent-ring)] font-medium"
+              >
+                Exit Admin
+              </Link>
+            )}
             <button
               onClick={() => setMobileOpen(o => !o)}
               className="md:hidden p-2 rounded-lg border border-[var(--border)] bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"
@@ -65,7 +67,7 @@ export default function Layout() {
                 <MobileLink to="/">Home</MobileLink>
                 <MobileLink to="/faculties">Faculties</MobileLink>
                 <MobileLink to="/about">About</MobileLink>
-                <MobileLink to={isAdmin ? '/' : '/admin'}>{isAdmin ? 'Exit Admin' : 'Admin'}</MobileLink>
+                {isAdmin && <MobileLink to="/">Exit Admin</MobileLink>}
               </div>
             </motion.div>
           )}

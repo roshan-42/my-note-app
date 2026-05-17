@@ -256,10 +256,7 @@ function EmptyFaculties() {
     <div className="card-surface rounded-2xl p-12 text-center">
       <GraduationCap className="w-12 h-12 text-[var(--text-3)] mx-auto mb-4" />
       <p className="text-[var(--text-2)] font-semibold">No faculties yet</p>
-      <p className="text-sm text-[var(--text-3)] mt-1">Head to the Admin panel and create your first faculty.</p>
-      <Link to="/admin" className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-hover)] transition-colors">
-        Open Admin <ArrowRight className="w-4 h-4" />
-      </Link>
+      <p className="text-sm text-[var(--text-3)] mt-1">Check back soon — content is being added.</p>
     </div>
   );
 }
