@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { renderMath } from '../utils/math';
 import type { Language } from '../types';
 
 interface Props {
@@ -8,6 +10,8 @@ interface Props {
 const isHtml = (c: string) => c.trim().startsWith('<');
 
 export default function NoteBlockRenderer({ content, language = 'en' }: Props) {
+  const html = useMemo(() => isHtml(content) ? renderMath(content) : '', [content]);
+
   if (!content) {
     return <p className="text-[var(--text-3)] italic">No content available</p>;
   }
@@ -36,14 +40,23 @@ export default function NoteBlockRenderer({ content, language = 'en' }: Props) {
           [&_td]:border [&_td]:border-[var(--border)] [&_td]:px-3 [&_td]:py-2 [&_td]:text-[var(--text-2)]
           [&_tbody_tr]:hover:bg-[var(--surface-1)]
           ${language === 'np' ? 'text-lg' : ''}`}
-        dangerouslySetInnerHTML={{ __html: content }}
+        dangerouslySetInnerHTML={{ __html: html }}
       />
     );
   }
 
+  // Plain text — also support inline math
   return (
-    <p className={`text-[var(--text-2)] leading-relaxed whitespace-pre-wrap ${language === 'np' ? 'text-lg' : ''}`}>
-      {content}
-    </p>
+    <p
+      className={`text-[var(--text-2)] leading-relaxed whitespace-pre-wrap ${language === 'np' ? 'text-lg' : ''}`}
+      dangerouslySetInnerHTML={{ __html: renderMath(escapeHtml(content)) }}
+    />
   );
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }

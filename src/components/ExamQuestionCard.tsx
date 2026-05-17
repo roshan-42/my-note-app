@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { renderMath } from '../utils/math';
 import type { Language } from '../types';
 
 interface Props {
@@ -20,14 +21,16 @@ export default function ExamQuestionCard({
 
   const question = language === 'en' ? question_en : question_np || question_en;
   const answer = language === 'en' ? answer_en : answer_np || answer_en;
+  const answerHtml = useMemo(() => isHtml(answer) ? renderMath(answer) : '', [answer]);
 
   return (
     <div className="card-surface card-surface-hover rounded-xl px-5 py-4 sm:px-6">
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
-          <p className={`text-sm font-medium text-[var(--text-2)] ${language === 'np' ? 'text-lg leading-relaxed' : ''}`}>
-            {question}
-          </p>
+          <p
+            className={`text-sm font-medium text-[var(--text-2)] ${language === 'np' ? 'text-lg leading-relaxed' : ''}`}
+            dangerouslySetInnerHTML={{ __html: renderMath(escapeText(question)) }}
+          />
         </div>
         <div className="flex-shrink-0 flex items-center gap-2">
           <span className={`px-2 py-1 rounded text-xs font-semibold whitespace-nowrap ${
@@ -66,15 +69,20 @@ export default function ExamQuestionCard({
                 [&_pre]:bg-[var(--bg-0)] [&_pre]:p-3 [&_pre]:rounded [&_pre]:overflow-x-auto [&_pre]:my-1
                 [&_a]:text-[var(--accent)] [&_a]:underline
                 ${language === 'np' ? 'text-lg' : 'text-base'}`}
-              dangerouslySetInnerHTML={{ __html: answer }}
+              dangerouslySetInnerHTML={{ __html: answerHtml }}
             />
           ) : (
-            <p className={`text-[var(--text-2)] leading-relaxed whitespace-pre-wrap ${language === 'np' ? 'text-lg' : 'text-base'}`}>
-              {answer}
-            </p>
+            <p
+              className={`text-[var(--text-2)] leading-relaxed whitespace-pre-wrap ${language === 'np' ? 'text-lg' : 'text-base'}`}
+              dangerouslySetInnerHTML={{ __html: renderMath(escapeText(answer)) }}
+            />
           )}
         </div>
       )}
     </div>
   );
+}
+
+function escapeText(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
