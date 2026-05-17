@@ -3,11 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { Plus, Save, Trash2, X, ArrowRight, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { addDoc, collection, deleteDoc, doc, updateDoc, where } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useCollection } from '../../hooks/useFirestore';
 import { uniqueSlug } from '../../utils/slug';
 import { termLabel } from '../../utils/term';
+import { cascadeDeleteChapter, formatCascadeSummary } from '../../utils/cascade';
 import { useConfirm } from '../../context/ConfirmContext';
 import type { Faculty, Subject, Chapter } from '../../types';
 
@@ -65,16 +66,20 @@ export default function AdminSubject() {
   const handleDelete = async (c: Chapter) => {
     const ok = await confirm({
       title: `Delete "${c.title_en}"?`,
-      message: 'Notes and questions in this chapter remain in storage but become orphaned.',
-      confirmLabel: 'Delete chapter',
+      message: 'All notes and questions in this chapter will be permanently removed.',
+      confirmLabel: 'Delete everything',
       tone: 'danger',
     });
     if (!ok) return;
+    const loadingId = toast.loading('Deleting chapter and all children…');
     try {
-      await deleteDoc(doc(db, 'chapters', c.id));
-      toast.success('Chapter deleted');
+      const result = await cascadeDeleteChapter(c.id);
+      toast.success(`Chapter "${c.title_en}" deleted`, {
+        id: loadingId,
+        description: formatCascadeSummary(result),
+      });
     } catch (err) {
-      toast.error('Delete failed', { description: (err as Error).message });
+      toast.error('Delete failed', { id: loadingId, description: (err as Error).message });
     }
   };
 

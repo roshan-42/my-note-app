@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Plus, Save, Trash2, Edit2, X, Calendar, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
-import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { uniqueSlug } from '../utils/slug';
 import { termLabelPlural } from '../utils/term';
+import { cascadeDeleteFaculty, formatCascadeSummary } from '../utils/cascade';
 import { useConfirm } from '../context/ConfirmContext';
 import type { Faculty, TermType } from '../types';
 
@@ -81,16 +82,20 @@ export default function FacultyEditor({ faculties }: Props) {
   const handleDelete = async (f: Faculty) => {
     const ok = await confirm({
       title: `Delete "${f.name_en}"?`,
-      message: 'Subjects, chapters, notes and questions under this faculty are not auto-deleted. Remove those first if you want a clean wipe.',
-      confirmLabel: 'Delete faculty',
+      message: 'All subjects, chapters, notes and questions under this faculty will be permanently removed. This cannot be undone.',
+      confirmLabel: 'Delete everything',
       tone: 'danger',
     });
     if (!ok) return;
+    const loadingId = toast.loading('Deleting faculty and all children…');
     try {
-      await deleteDoc(doc(db, 'faculties', f.id));
-      toast.success('Faculty deleted', { description: f.name_en });
+      const result = await cascadeDeleteFaculty(f.id);
+      toast.success(`Faculty "${f.name_en}" deleted`, {
+        id: loadingId,
+        description: formatCascadeSummary(result),
+      });
     } catch (err) {
-      toast.error('Delete failed', { description: (err as Error).message });
+      toast.error('Delete failed', { id: loadingId, description: (err as Error).message });
     }
   };
 

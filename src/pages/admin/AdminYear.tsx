@@ -3,11 +3,12 @@ import { Link, useParams } from 'react-router-dom';
 import { Plus, Save, Trash2, X, ArrowRight, Edit2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { useCollection } from '../../hooks/useFirestore';
 import { uniqueSlug } from '../../utils/slug';
 import { termLabel } from '../../utils/term';
+import { cascadeDeleteSubject, formatCascadeSummary } from '../../utils/cascade';
 import { useConfirm } from '../../context/ConfirmContext';
 import type { Faculty, Subject } from '../../types';
 
@@ -62,16 +63,20 @@ export default function AdminYear() {
   const handleDelete = async (s: Subject) => {
     const ok = await confirm({
       title: `Delete "${s.name_en}"?`,
-      message: 'Chapters and notes under this subject are not auto-deleted.',
-      confirmLabel: 'Delete subject',
+      message: 'All chapters, notes and questions under this subject will be permanently removed.',
+      confirmLabel: 'Delete everything',
       tone: 'danger',
     });
     if (!ok) return;
+    const loadingId = toast.loading('Deleting subject and all children…');
     try {
-      await deleteDoc(doc(db, 'subjects', s.id));
-      toast.success('Subject deleted');
+      const result = await cascadeDeleteSubject(s.id);
+      toast.success(`Subject "${s.name_en}" deleted`, {
+        id: loadingId,
+        description: formatCascadeSummary(result),
+      });
     } catch (err) {
-      toast.error('Delete failed', { description: (err as Error).message });
+      toast.error('Delete failed', { id: loadingId, description: (err as Error).message });
     }
   };
 

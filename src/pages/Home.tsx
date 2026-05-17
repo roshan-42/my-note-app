@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen, BarChart3, Languages, ShieldCheck, Sparkles, GraduationCap } from 'lucide-react';
+import { useMemo } from 'react';
 import { useCollection } from '../hooks/useFirestore';
 import { termLabelPlural } from '../utils/term';
 import type { Faculty, Subject, Chapter, Note } from '../types';
@@ -22,6 +23,16 @@ export default function Home() {
   const { data: notes } = useCollection<Note>('notes');
 
   const sortedFaculties = [...faculties].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+  const liveCounts = useMemo(() => {
+    const facIds = new Set(faculties.map(f => f.id));
+    const liveSubj = subjects.filter(s => facIds.has(s.facultyId));
+    const subjIds = new Set(liveSubj.map(s => s.id));
+    const liveCh = chapters.filter(c => subjIds.has(c.subjectId));
+    const chIds = new Set(liveCh.map(c => c.id));
+    const liveNotes = notes.filter(n => chIds.has(n.chapterId));
+    return { subjects: liveSubj.length, chapters: liveCh.length, notes: liveNotes.length };
+  }, [faculties, subjects, chapters, notes]);
 
   return (
     <div>
@@ -94,9 +105,9 @@ export default function Home() {
       <section className="border-y border-[var(--border)] bg-[var(--bg-1)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
           <Stat label="Faculties" value={sortedFaculties.length} />
-          <Stat label="Subjects" value={subjects.length} />
-          <Stat label="Chapters" value={chapters.length} />
-          <Stat label="Notes" value={notes.length} />
+          <Stat label="Subjects" value={liveCounts.subjects} />
+          <Stat label="Chapters" value={liveCounts.chapters} />
+          <Stat label="Notes" value={liveCounts.notes} />
         </div>
       </section>
 
