@@ -88,7 +88,7 @@ export default function AdminSidebar({
                                     : 'text-gray-500 hover:bg-slate-800'
                                 }`}
                               >
-                                Ch {ch.order}: {ch.title_en}
+                                {ch.title_en}
                               </button>
                             ))}
                           </div>

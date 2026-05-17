@@ -50,7 +50,7 @@ export default function Admin() {
                 <><span>→</span><span className="text-blue-400 font-semibold">{selectedSubject.name_en}</span></>
               )}
               {selectedChapter && (
-                <><span>→</span><span className="text-purple-400 font-semibold">Ch {selectedChapter.order}: {selectedChapter.title_en}</span></>
+                <><span>→</span><span className="text-purple-400 font-semibold">{selectedChapter.title_en}</span></>
               )}
             </div>
           </div>

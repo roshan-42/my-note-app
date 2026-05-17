@@ -95,7 +95,7 @@ export default function ChapterEditor({ subject, onRefresh }: Props) {
           sorted.map(ch => (
             <div key={ch.id} className="p-4 border border-slate-700 rounded-lg bg-slate-800 flex justify-between items-center">
               <div>
-                <h4 className="font-semibold text-white">Ch {ch.order}: {ch.title_en}</h4>
+                <h4 className="font-semibold text-white">{ch.title_en}</h4>
                 <p className="text-sm text-gray-400 mt-1">{ch.title_np}</p>
               </div>
               <button onClick={() => handleDelete(ch.id)}
