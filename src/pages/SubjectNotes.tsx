@@ -6,6 +6,7 @@ import { where } from "firebase/firestore";
 import { useCollection } from "../hooks/useFirestore";
 import { useLanguage } from "../context/LanguageContext";
 import DualLanguageToggle from "../components/DualLanguageToggle";
+import NotesExamsToggle from "../components/NotesExamsToggle";
 import NoteBlockRenderer from "../components/NoteBlockRenderer";
 import type { Faculty, Subject as SubjectType, Chapter, Note } from "../types";
 
@@ -211,10 +212,13 @@ export default function SubjectNotes() {
                   ? selected.title_en
                   : selected.title_np || selected.title_en}
               </h1>
-              <DualLanguageToggle
-                currentLanguage={language}
-                onLanguageChange={setLanguage}
-              />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <NotesExamsToggle base={base} chSlug={selected.slug} active="notes" />
+                <DualLanguageToggle
+                  currentLanguage={language}
+                  onLanguageChange={setLanguage}
+                />
+              </div>
             </div>
 
             <div className="p-4 sm:p-8 space-y-6 max-w-4xl">

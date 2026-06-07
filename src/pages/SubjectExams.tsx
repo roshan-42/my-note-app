@@ -6,6 +6,7 @@ import { where } from 'firebase/firestore';
 import { useCollection } from '../hooks/useFirestore';
 import { useLanguage } from '../context/LanguageContext';
 import DualLanguageToggle from '../components/DualLanguageToggle';
+import NotesExamsToggle from '../components/NotesExamsToggle';
 import ExamQuestionCard from '../components/ExamQuestionCard';
 import type { Faculty, Subject as SubjectType, Chapter, ExamQuestion } from '../types';
 
@@ -145,7 +146,10 @@ export default function SubjectExams() {
                 <span className="text-[var(--accent)] font-mono mr-2">Ch {selected.order}</span>
                 {language === 'en' ? selected.title_en : selected.title_np || selected.title_en}
               </h1>
-              <DualLanguageToggle currentLanguage={language} onLanguageChange={setLanguage} />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <NotesExamsToggle base={base} chSlug={selected.slug} active="exams" />
+                <DualLanguageToggle currentLanguage={language} onLanguageChange={setLanguage} />
+              </div>
             </div>
 
             <div className="sticky top-[112px] sm:top-[120px] z-10 border-b border-[var(--border)] bg-[var(--bg-1)]/90 backdrop-blur-lg px-4 sm:px-8 py-3 flex gap-2 overflow-x-auto">
